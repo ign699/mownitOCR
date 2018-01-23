@@ -79,6 +79,7 @@ def print_with_contours(text, contour):
 
 def get_letters_dict():
     letters = get_letters()
+    print(letters)
     return generate_dict_for_letters(text, letters)
 
 def find_matching_letter(letter_contour, letters_dict):
@@ -109,18 +110,17 @@ def is_word_in_line(word, line):
 
 
 
-image = "text_1.png"
+image = "test.png"
 text = read_img_to_grey(image)
 letters_coor_dict = get_letters_dict()
 
 
-words = list(reversed(get_contours(dilate_words(text, 4))))
-lines = list(reversed(get_contours(dilate_words(text, 15))))
+words = list(reversed(get_contours(dilate_words(text, 7))))
+lines = list(reversed(get_contours(dilate_words(text, 30))))
 whole_text = ""
 text = read_img_to_grey(image)
 
 for line in lines:
-    print_with_contours(text, line)
     for word in words:
         x, y, w, h = cv2.boundingRect(word)
         letters = []
