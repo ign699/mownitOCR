@@ -78,61 +78,48 @@ def print_with_contours(text, contour):
     text = cv2.cvtColor(text, cv2.COLOR_GRAY2RGB)
     show_img(cv2.drawContours(text, [contour], 0, (0,255,0), 1))
 
+def get_letters_dict():
+    letters = get_letters()
+    return generate_dict_for_letters(text, letters)
 
-text = read_img_to_grey("text_1.png")
+def find_matching_letter(letter_contour, letters_dict):
+    a, b, c, d = get_img_inside_contour(letter_contour)
+    best_corr = 0
+    best_letter = ""
+    pos = 0
+    for letter in letters_coor_dict:
+        letter_positions = letters_coor_dict[letter]
+        correlation = 0
+        poss = 0
+        for position in letter_positions:
+            if check_if_in_word(letter_contour, position[0], x+ a, y+ b):
+                if position[1] > correlation:
+                    correlation = position[1]
+                    poss = position[0][1]
+        if correlation > best_corr:
+            best_letter = letter
+            pos = poss
+            best_corr = correlation
+    return best_letter, pos
 
 
-letters = get_letters()
-letters_dict = generate_dict_for_letters(text, letters)
+image = "text_1.png"
+text = read_img_to_grey(image)
+letters_coor_dict = get_letters_dict()
 
-words = get_contours(dilate_words(text))
-words = list(reversed(words))
+
+words = list(reversed(get_contours(dilate_words(text))))
 whole_text = ""
-text = read_img_to_grey("text_1.png")
+text = read_img_to_grey(image)
 for word in words:
     x, y, w, h = cv2.boundingRect(word)
     letters = []
     for letter_contour in get_contours(text[y: y + h, x: x + w]):
-        a, b, c, d = get_img_inside_contour(letter_contour)
-        corM = 0
-        letttt = ""
-        pos = 0
-        for letter in letters_dict:
-            letter_positions = letters_dict[letter]
-            correlation = 0
-            poss = 0
-            for position in letter_positions:
-                if check_if_in_word(letter_contour, position[0], x+ a, y+ b):
-                    if position[1] > correlation:
-                        correlation = position[1]
-                        poss = position[0][1]
-            if correlation > corM:
-                letttt = letter
-                pos = poss
-                corM = correlation
-        letters.append((letttt, pos))
+        char, pos = find_matching_letter(letter_contour, letters_coor_dict)
+        letters.append((char, pos))
     letters.sort(key=lambda tup: tup[1])
     for letter in letters:
-        whole_text+=letter[0]
-    whole_text+=" "
+        whole_text += letter[0]
+    whole_text += " "
 
 print(whole_text)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
