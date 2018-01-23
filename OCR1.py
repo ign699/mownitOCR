@@ -24,8 +24,8 @@ def show_img(img):
 
 
 
-def dilate_words(text):
-    rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 5))
+def dilate_words(text, width):
+    rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (width, 5))
     return cv2.dilate(text, rectKernel, 1)
 
 def get_contours(dialted_text):
@@ -56,7 +56,6 @@ def coor_to_letter(corr):
     return coors
 
 def check_if_in_word(contour, letter, x, y):
-    
     a, b, w, h = get_img_inside_contour(contour)
     return (letter[0] > y and letter[0] < y + h and letter[1] > x and letter[1] < x + w)
 
@@ -102,24 +101,38 @@ def find_matching_letter(letter_contour, letters_dict):
             best_corr = correlation
     return best_letter, pos
 
+def is_word_in_line(word, line):
+    x_l, y_l, w_l, h_l = cv2.boundingRect(line)
+    x, y, w, h = cv2.boundingRect(word)
+    return y >= y_l and y <= y_l + h_l
+
+
+
 
 image = "text_1.png"
 text = read_img_to_grey(image)
 letters_coor_dict = get_letters_dict()
 
 
-words = list(reversed(get_contours(dilate_words(text))))
+words = list(reversed(get_contours(dilate_words(text, 4))))
+lines = list(reversed(get_contours(dilate_words(text, 15))))
 whole_text = ""
 text = read_img_to_grey(image)
-for word in words:
-    x, y, w, h = cv2.boundingRect(word)
-    letters = []
-    for letter_contour in get_contours(text[y: y + h, x: x + w]):
-        char, pos = find_matching_letter(letter_contour, letters_coor_dict)
-        letters.append((char, pos))
-    letters.sort(key=lambda tup: tup[1])
-    for letter in letters:
-        whole_text += letter[0]
-    whole_text += " "
+
+for line in lines:
+    print_with_contours(text, line)
+    for word in words:
+        x, y, w, h = cv2.boundingRect(word)
+        letters = []
+        for letter_contour in get_contours(text[y: y + h, x: x + w]):
+            char, pos = find_matching_letter(letter_contour, letters_coor_dict)
+            letters.append((char, pos))
+        if is_word_in_line(word, line):
+            letters.sort(key=lambda tup: tup[1])
+            for letter in letters:
+                whole_text += letter[0]
+            else:
+                whole_text += " "
+    whole_text += '\n'
 
 print(whole_text)
